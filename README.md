@@ -111,8 +111,11 @@ the greyed + 1px-blur look; `disabled` still carries a click handler so tapping 
 surfaces the "more than a week away" warning, while `capped` cells are fully inert.
 
 **Layout:** the calendar block (month label + card) is vertically centered in the
-space between the subtitle and the footer (verified within a few px of dead
-centre); messages render directly beneath the card.
+space between the subtitle and the footer. The message area below the card holds a
+**fixed reserved height** (sized for the worst realistic case — a 5-day range
+including a weekend), so messages appearing/disappearing never shift the calendar.
+Row spacing and cell/type sizes are kept compact so the whole screen fits without
+scrolling down to ~360×667 (iPhone SE); shorter still, the content scrolls.
 
 ## Validation model
 
