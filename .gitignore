@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Build outputs (regenerable: `npm run build` / `npm run build:artifact`)
+dist/
+dist-artifact/
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# Editor / OS
+.DS_Store
+.vscode/
+
+# Claude Code local (machine-specific) settings
+.claude/settings.local.json

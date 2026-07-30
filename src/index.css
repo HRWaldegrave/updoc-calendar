@@ -1,0 +1,35 @@
+@import 'tailwindcss';
+
+/*
+ * Updoc brand tokens — best-effort approximations reverse-engineered from the
+ * 8 reference screenshots + the build spec. Swap these for the real Figma
+ * variables once the source file is share-accessible (see README "Open questions").
+ */
+@theme {
+  --color-brand-navy: #2e1a6b;
+  --color-brand-purple: #6b46c1;
+  --color-brand-lavender: #ede9f7;
+  --color-brand-lavender-border: #c9bfe8;
+  --color-brand-today-fill: #faf8fc;
+  --color-brand-today-stroke: #eae3f2;
+  --color-brand-disabled: #b8b3c8;
+  --color-brand-muted: #8b86a0;
+  --color-brand-warn: #d57e38;
+  --color-brand-info: #4f7de0;
+  --color-brand-continue-off: #e4def5;
+  --color-brand-progress-off: #d8d3e8;
+
+  --font-sans: 'Poppins', ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
