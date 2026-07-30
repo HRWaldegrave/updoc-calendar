@@ -117,6 +117,14 @@ including a weekend), so messages appearing/disappearing never shift the calenda
 Row spacing and cell/type sizes are kept compact so the whole screen fits without
 scrolling down to ~360×667 (iPhone SE); shorter still, the content scrolls.
 
+- **Equal grid spacing:** date cells fill their column and a single grid `gap`
+  drives both row and column spacing, so the two stay equal at any width (a
+  fixed-width cell centred in a flexible column would grow the horizontal gap on
+  wider screens).
+- **Short viewports** (`@media (max-height: 800px)` — phones, small windows) hide
+  the logo and step progress bar and let the title sit near the top, reclaiming
+  vertical space.
+
 ## Validation model
 
 Single **contiguous** date-range picker. Two independent message slots:

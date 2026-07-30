@@ -33,3 +33,18 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
+
+/*
+ * On short viewports (phones, and any window shorter than a typical
+ * laptop/tablet) reclaim vertical space: hide the logo + step progress bar and
+ * let the title sit near the top. Height-driven so it triggers exactly when
+ * space is tight, regardless of device.
+ */
+@media (max-height: 800px) {
+  .compact-hide {
+    display: none;
+  }
+  .compact-tight {
+    margin-top: 0;
+  }
+}

@@ -255,8 +255,8 @@ export function LeaveDateSelector({
         <main className="flex flex-1 flex-col px-6 pt-8 pb-4">
           {/* Top group: logo, progress, title, subtitle (natural height, pinned top) */}
           <div>
-          {/* 1. Logo */}
-          <div className="flex justify-center">
+          {/* 1. Logo (hidden on short viewports to reclaim vertical space) */}
+          <div className="compact-hide flex justify-center">
             <span className="relative text-3xl font-bold lowercase tracking-tight text-brand-navy">
               <span
                 aria-hidden="true"
@@ -268,9 +268,9 @@ export function LeaveDateSelector({
             </span>
           </div>
 
-          {/* 2. Step progress bar */}
+          {/* 2. Step progress bar (hidden on short viewports) */}
           <div
-            className="mt-6 flex gap-2"
+            className="compact-hide mt-6 flex gap-2"
             role="progressbar"
             aria-valuemin={1}
             aria-valuemax={totalSteps}
@@ -287,13 +287,13 @@ export function LeaveDateSelector({
             ))}
           </div>
 
-          {/* 3. Title */}
-          <h1 className="mt-8 text-center text-[24px] font-bold leading-tight text-brand-navy">
+          {/* 3. Title (rises toward the top when the logo/progress are hidden) */}
+          <h1 className="compact-tight mt-8 text-center text-[24px] font-bold leading-tight text-brand-navy">
             Select Your Leave Dates
           </h1>
 
           {/* 4. Dynamic subtitle */}
-          <p className="mt-2 text-center text-base" aria-live="off">
+          <p className="mt-2 text-center text-sm" aria-live="off">
             <span className="text-brand-muted">It is {timeStr} on </span>
             <span className="font-semibold text-brand-navy">{dateStr}</span>
           </p>
@@ -319,15 +319,16 @@ export function LeaveDateSelector({
               ))}
             </div>
 
-            {/* Date cells: 3 or 4 rows of 7 (see grid algorithm above). Row
-                spacing is kept tight (near the column spacing) to save height. */}
-            <div className="mt-1 grid grid-cols-7 gap-y-0.5">
+            {/* Date cells: 3 or 4 rows of 7 (see grid algorithm above). Cells
+                fill their column and a single `gap` drives both the row and
+                column spacing, so the two stay equal at any viewport width. */}
+            <div className="mt-1 grid grid-cols-7 gap-1">
               {cells.map((d) => {
                 const state = cellStateOf(d);
                 const greyed = state === 'disabled' || state === 'capped';
                 const inert = state === 'capped'; // no message, no pointer events
                 const base =
-                  'flex h-10 w-11 items-center justify-center rounded-2xl text-base transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple focus-visible:ring-offset-1';
+                  'flex h-10 w-full items-center justify-center rounded-2xl text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple focus-visible:ring-offset-1';
                 const byState =
                   state === 'selected'
                     ? 'bg-brand-purple font-bold text-white'
@@ -340,20 +341,19 @@ export function LeaveDateSelector({
                           }`;
 
                 return (
-                  <div key={dateKey(d)} className="flex justify-center">
-                    <button
-                      type="button"
-                      onClick={() => handleTap(d)}
-                      aria-disabled={greyed || undefined}
-                      aria-pressed={state === 'selected'}
-                      aria-current={state === 'today' ? 'date' : undefined}
-                      aria-label={fullDateLabel(d)}
-                      style={greyed ? { filter: 'blur(1px)' } : undefined}
-                      className={`${base} ${byState}`}
-                    >
-                      {d.day}
-                    </button>
-                  </div>
+                  <button
+                    key={dateKey(d)}
+                    type="button"
+                    onClick={() => handleTap(d)}
+                    aria-disabled={greyed || undefined}
+                    aria-pressed={state === 'selected'}
+                    aria-current={state === 'today' ? 'date' : undefined}
+                    aria-label={fullDateLabel(d)}
+                    style={greyed ? { filter: 'blur(1px)' } : undefined}
+                    className={`${base} ${byState}`}
+                  >
+                    {d.day}
+                  </button>
                 );
               })}
             </div>
