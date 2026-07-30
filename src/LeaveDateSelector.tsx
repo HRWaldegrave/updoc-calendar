@@ -349,8 +349,7 @@ export function LeaveDateSelector({
                     aria-pressed={state === 'selected'}
                     aria-current={state === 'today' ? 'date' : undefined}
                     aria-label={fullDateLabel(d)}
-                    style={greyed ? { filter: 'blur(1px)' } : undefined}
-                    className={`${base} ${byState}`}
+                    className={`${base} ${byState}${greyed ? ' disabled-blur' : ''}`}
                   >
                     {d.day}
                   </button>
@@ -390,11 +389,10 @@ export function LeaveDateSelector({
               onClick={handleContinue}
               disabled={!canContinue}
               aria-disabled={!canContinue}
-              style={!canContinue ? { filter: 'blur(1px)' } : undefined}
               className={`flex-1 rounded-2xl py-4 text-lg font-bold transition-colors ${
                 canContinue
                   ? 'cursor-pointer bg-brand-purple text-white hover:brightness-95'
-                  : 'cursor-not-allowed bg-brand-continue-off text-white/70'
+                  : 'cursor-not-allowed bg-brand-continue-off text-white/70 disabled-blur'
               }`}
             >
               Continue

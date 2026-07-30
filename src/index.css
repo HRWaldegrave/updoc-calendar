@@ -48,3 +48,19 @@ body {
     margin-top: 0;
   }
 }
+
+/*
+ * Disabled/inactive look: a soft 1px blur. iOS Safari can render `filter: blur`
+ * with a hard, glitchy edge when the element is re-rasterized after a repaint
+ * (e.g. when a message appears), so pin it to its own stable GPU compositing
+ * layer (translateZ + backface-visibility + isolation) for a clean, consistent
+ * blur across repaints.
+ */
+.disabled-blur {
+  filter: blur(1px);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  isolation: isolate;
+}
