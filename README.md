@@ -110,34 +110,42 @@ stroke) · `selected` (overrides `today` visually). `disabled` and `capped` shar
 the greyed + 1px-blur look; `disabled` still carries a click handler so tapping it
 surfaces the "more than a week away" warning, while `capped` cells are fully inert.
 
-**Layout:** the calendar block (month label + card) is vertically centered in the
-space between the subtitle and the footer. The message area below the card holds a
-**fixed reserved height** (sized for the worst realistic case — a 5-day range
-including a weekend), so messages appearing/disappearing never shift the calendar.
-Row spacing and cell/type sizes are kept compact so the whole screen fits without
-scrolling down to ~360×667 (iPhone SE); shorter still, the content scrolls.
+**Layout:** the middle column is a top spacer / calendar / bottom spacer. Both
+spacers grow equally, so the calendar block is **centered** whenever there's room;
+the bottom spacer also holds a **fixed message reserve** (min-height for up to 4
+lines = 2 messages) so messages appearing/disappearing never shift the calendar.
+The top spacer has a **32px minimum** (matching the space above the title), so the
+subtitle→month gap is never smaller than that. When even the reserve can't fit
+(very short screens), the content scrolls.
 
 - **Equal grid spacing:** date cells fill their column and a single grid `gap`
   drives both row and column spacing, so the two stay equal at any width (a
   fixed-width cell centred in a flexible column would grow the horizontal gap on
   wider screens).
 - **Short viewports** (`@media (max-height: 800px)` — phones, small windows) hide
-  the logo and step progress bar and let the title sit near the top, reclaiming
-  vertical space.
+  the logo and step progress bar, let the title sit near the top, and shrink the
+  cell height to 38px, reclaiming vertical space.
+- **Touch:** all buttons use `touch-action: manipulation`, removing the mobile
+  double-tap delay so rapid taps register on the cell actually tapped (without it
+  iOS Safari can mis-deliver a fast second tap to the previous target).
 
 ## Validation model
 
-Single **contiguous** date-range picker. Two independent message slots:
+Single **contiguous** date-range picker. Messages come in two kinds:
 
-- **Slot A — blocking error (orange):** a gap in the selection, or (transient)
-  an out-of-window tap. Gap takes priority. Blocks Continue.
+- **Blocking error (orange):** a gap in the selection, or (transient) an
+  out-of-window tap. Gap takes priority. Blocks Continue.
   - The out-of-window warning is **transient**: it auto-dismisses after **5s**
     (re-armed on each disabled tap) and clears immediately on any in-window tap.
-- **Slot B — advisory (blue), non-blocking, can stack:** `count ≥ 4` →
-  "More than 3 dates may require additional approval."; `count == 5` → also
-  "No more than 5 dates can be selected."; **any Sat/Sun selected** → also
-  "Are you sure you need leave for the weekend?" (clears once no weekend date
-  remains). Suppressed whenever Slot A is showing.
+- **Advisory (blue), non-blocking:** `count ≥ 4` → "More than 3 dates may require
+  additional approval."; `count == 5` → "No more than 5 dates can be selected.";
+  **any Sat/Sun selected** → "Are you sure you need leave for the weekend?"
+  Advisories are suppressed while a gap error shows.
+
+**At most 2 messages are shown at once.** A blocking error always shows; the rest
+of the budget goes to the **most-recently-activated** advisories (recency is
+tracked so the oldest is dropped first). This caps the message area at 4 lines,
+which the reserved space below the calendar is sized for.
 
 **5-date cap.** When 5 dates are selected, every non-selected in-window date
 becomes inert and greyed (identical to out-of-window dates) — you can't add a

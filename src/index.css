@@ -40,12 +40,26 @@ body {
  * let the title sit near the top. Height-driven so it triggers exactly when
  * space is tight, regardless of device.
  */
+/*
+ * Remove the ~300ms double-tap delay / double-tap-zoom so rapid taps register
+ * immediately on the element actually tapped. Without this, iOS Safari can hold
+ * a tap to test for a double-tap and mis-deliver a fast second tap to the
+ * previous target.
+ */
+button {
+  touch-action: manipulation;
+}
+
 @media (max-height: 800px) {
   .compact-hide {
     display: none;
   }
   .compact-tight {
     margin-top: 0;
+  }
+  /* Slightly shorter calendar rows on short viewports to reclaim height. */
+  .cal-cell {
+    height: 38px;
   }
 }
 

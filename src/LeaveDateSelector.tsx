@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   addDays,
   compareDays,
@@ -149,6 +149,11 @@ export function LeaveDateSelector({
   const [outOfRangeAt, setOutOfRangeAt] = useState<number | null>(null);
   const outOfRange = outOfRangeAt !== null;
 
+  // Records the order in which each advisory message became active, so that when
+  // more advisories are active than we can show we keep the most recent ones.
+  const advisoryRecency = useRef<Record<string, number>>({});
+  const advisorySeq = useRef(0);
+
   // If the real date rolls over (or the mock changes), start fresh — a stale
   // selection could otherwise sit outside the new window.
   useEffect(() => {
@@ -213,18 +218,44 @@ export function LeaveDateSelector({
   const count = selected.length;
   const canContinue = count >= 1 && !hasGap;
 
-  // Slot A — blocking error (orange). Gap takes priority over out-of-range.
-  const slotA = hasGap ? MSG.GAP : outOfRange ? MSG.OUT_OF_RANGE : null;
-
   // Any selected date that falls on a Saturday (isoWeekday 5) or Sunday (6).
   const hasWeekend = selected.some((d) => isoWeekday(d) >= 5);
 
-  // Slot B — advisory notices (blue). Fully suppressed while Slot A is showing.
-  const slotB: string[] = [];
-  if (!slotA && !hasGap) {
-    if (count >= ADVISORY_THRESHOLD) slotB.push(MSG.APPROVAL);
-    if (count === MAX_SELECTED) slotB.push(MSG.CAP);
-    if (hasWeekend) slotB.push(MSG.WEEKEND);
+  // Advisory notices (blue), in canonical display order. Suppressed while a gap
+  // error shows — advisories about an invalid selection are just noise.
+  const advisories = [
+    { key: 'APPROVAL', text: MSG.APPROVAL, active: !hasGap && count >= ADVISORY_THRESHOLD },
+    { key: 'CAP', text: MSG.CAP, active: !hasGap && count === MAX_SELECTED },
+    { key: 'WEEKEND', text: MSG.WEEKEND, active: !hasGap && hasWeekend },
+  ];
+  const activeAdvisoryKeys = advisories.filter((a) => a.active).map((a) => a.key);
+
+  // Update the recency record idempotently: new advisories get the next sequence
+  // number, no-longer-active ones are dropped. (Safe under StrictMode's double
+  // render — repeating with the same active set is a no-op.)
+  const rec = advisoryRecency.current;
+  for (const k of Object.keys(rec)) {
+    if (!activeAdvisoryKeys.includes(k)) delete rec[k];
+  }
+  for (const k of activeAdvisoryKeys) {
+    if (rec[k] === undefined) rec[k] = (advisorySeq.current += 1);
+  }
+
+  // Show at most 2 messages. A blocking error (orange) always shows; the rest of
+  // the budget goes to the most-recently-activated advisories (blue).
+  const errorText = hasGap ? MSG.GAP : outOfRange ? MSG.OUT_OF_RANGE : null;
+  const keptAdvisories = new Set(
+    [...activeAdvisoryKeys]
+      .sort((a, b) => rec[b] - rec[a])
+      .slice(0, errorText ? 1 : 2),
+  );
+
+  const messages: { text: string; kind: 'error' | 'advice' }[] = [];
+  if (errorText) messages.push({ text: errorText, kind: 'error' });
+  for (const a of advisories) {
+    if (a.active && keptAdvisories.has(a.key)) {
+      messages.push({ text: a.text, kind: 'advice' });
+    }
   }
 
   const cellStateOf = (d: CivilDate): CellState => {
@@ -299,9 +330,15 @@ export function LeaveDateSelector({
           </p>
           </div>
 
-          {/* Calendar block — vertically centered in the space between the
-              subtitle and the footer (grows to fill, centers its content). */}
-          <div className="flex flex-1 flex-col justify-center">
+          {/* Middle column: the top spacer guarantees ≥32px below the subtitle
+              (matching the space above the title), the calendar sits centred when
+              there's room, and the bottom spacer holds a fixed message reserve.
+              Both spacers grow equally, so the card is centred whenever the
+              message reserve isn't the binding constraint. */}
+          <div className="flex flex-1 flex-col">
+          <div className="min-h-8 flex-1" aria-hidden="true" />
+
+          <div>
           {/* 5. Month label */}
           <p className="text-base font-semibold text-brand-navy">{label}</p>
 
@@ -328,7 +365,7 @@ export function LeaveDateSelector({
                 const greyed = state === 'disabled' || state === 'capped';
                 const inert = state === 'capped'; // no message, no pointer events
                 const base =
-                  'flex h-10 w-full items-center justify-center rounded-2xl text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple focus-visible:ring-offset-1';
+                  'cal-cell flex h-10 w-full items-center justify-center rounded-2xl text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple focus-visible:ring-offset-1';
                 const byState =
                   state === 'selected'
                     ? 'bg-brand-purple font-bold text-white'
@@ -357,19 +394,24 @@ export function LeaveDateSelector({
               })}
             </div>
           </div>
+          </div>
 
-          {/* 7. Message area. A fixed reserved height keeps the calendar from
-              jumping when messages appear/disappear — the space is always held,
-              sized for the worst realistic case (5-day range incl. a weekend). */}
-          <div className="mt-3 min-h-[7rem] space-y-1" aria-live="polite">
-            {slotA && (
-              <p className="text-sm font-medium text-brand-warn">{slotA}</p>
-            )}
-            {slotB.map((msg) => (
-              <p key={msg} className="text-sm font-medium text-brand-info">
-                {msg}
-              </p>
-            ))}
+          {/* 7. Message reserve (bottom spacer): a fixed min-height for up to 4
+              lines (2 messages) so the calendar never shifts when messages
+              appear/disappear; it also grows to share the centring space. */}
+          <div className="min-h-[6.25rem] flex-1">
+            <div className="mt-3 space-y-1" aria-live="polite">
+              {messages.map((m) => (
+                <p
+                  key={m.text}
+                  className={`text-sm font-medium ${
+                    m.kind === 'error' ? 'text-brand-warn' : 'text-brand-info'
+                  }`}
+                >
+                  {m.text}
+                </p>
+              ))}
+            </div>
           </div>
           </div>
         </main>
